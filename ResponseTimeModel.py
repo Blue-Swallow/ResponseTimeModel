@@ -51,7 +51,8 @@ def func_Vf(Pc,Vox):
     Vf: float
         fuel regression rate
     """
-    n = 0.951
+#    n = 0.
+    n = 1.0
     C1  = 1.39e-7
     C2 = 1.61e-9
     Vf = (C1/Vox + C2)*np.power(Pc,n)
@@ -80,6 +81,8 @@ cea_fldpath = os.path.join("cea_db", "GOX_CurableResin", "csv_database") # assig
 func_T = Read_datset(cea_fldpath).gen_func("T_c") # generate gas temeratur interporate function
 func_CSTAR = Read_datset(cea_fldpath).gen_func("CSTAR") # generate c* interporate functioni
 func_M = Read_datset(cea_fldpath).gen_func("M_c") # generate molecular weight interpolate function
+func_cp = Read_datset(cea_fldpath).gen_func("cp_c")
+func_gamma = Read_datset(cea_fldpath).gen_func("GAMMAs_c")
 
 def func_R(of, Pc):
     """ Interpolate fuction of gas constant
@@ -96,9 +99,12 @@ def func_R(of, Pc):
     R: float
         gas constant [J/kg/K]
     """
-    Rstr = 8.43144598 # gas constant [J/mol/K]
-    M = func_M(of,Pc)
-    R = Rstr/M
+# =============================================================================
+#     Rstr = 8.43144598 # gas constant [J/mol/K]
+#     M = func_M(of,Pc)
+#     R = Rstr/M
+# =============================================================================
+    R = func_cp(of, Pc)*(1-1/func_gamma(of, Pc))    
     return(R)
 
 
@@ -209,15 +215,15 @@ def exe_rungekutta(t_range, func_mox):
 #######"""
 # define the function of oxidizer mass flow rate; func_mox
 def func_mox(t):
-    init = 15.0 # [s] transient supresstion time
-    period = 20.0 # [s] period
-    d_ratio = 0.5 # [-] duty ratio
-    mox_max = 11.0e-3 # [kg/s] maximum oxidizer mass flow rate
-    mox_min = 10.0e-3 # [kg/s] minimum oxidizer mass flow rate
+    init = 5.0 # [s] transient supresstion time
+    period = 15 # [s] period
+    d_ratio = 0.66 # [-] duty ratio
+    mox_max = 7.0e-3 # [kg/s] maximum oxidizer mass flow rate
+    mox_min = 2.50e-3 # [kg/s] minimum oxidizer mass flow rate
     if t<init:
         mox = mox_min
     else:
-        if (t+init)%period < period*d_ratio:
+        if (t-init)%period < period*d_ratio:
             mox = mox_max
         else:
             mox = mox_min
@@ -227,7 +233,7 @@ def func_mox(t):
 dt = 0.005 # [s] time step
 
 # define the calculation time
-t_range = np.arange(0, 60 +dt/2, dt)
+t_range = np.arange(0, 30 +dt/2, dt)
 
 # define the initial chamber pressure
 Pci = 0.1013e+6 #　[Pa] initial chamber pressure, absolute pressure
