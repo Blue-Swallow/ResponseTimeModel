@@ -277,16 +277,17 @@ if __name__ == "__main__":
                     "M_ox": 32.0e-3,    # [kg/mol] oxidizer mass per unit mole
                     "T_ox": 300,        # [K] oxidizer temperature
                     "Ru": 8.3144598,    # [J/mol-K] Universal gas constant
-                    "Pci": 0.1013e+6    # [Pa] initial chamber pressure
+                    "Pci": 0.1013e+6,   # [Pa] initial chamber pressure
+                    "eta": 0.85         # [-] efficiency of specific exhaust velocity
                     }
 
     # Parameters of calculation condition
     PARAM_CALCOND = {"dt": 0.001,       # [s] time resolution
                      "dx": 0.1e-3,      # [m] space resolution
-                     "t_end": 5.0,      # [s] end time of calculation
+                     "t_end": 30.0,     # [s] end time of calculation
                      "x_max": 8.0e-3,   # [m] maximum calculation region
                      "Vf_max": 10.0e-3, # [m/s] expected maximum axial fuel regression rate
-                     "Vf_mode": False   # whether code uses Vf (radial integretion) or not in mf calculation
+                     "Vf_mode": True   # whether code uses Vf (radial integretion) or not in mf calculation
                     }
 
     # Constant of fuel regression model and experimental regression rate formula
@@ -315,7 +316,7 @@ if __name__ == "__main__":
     def FUNC_MOX(t):
         mox1 = 3.0e-3 # [kg/s] oxidizer mass flow rate before slottling
         mox2 = 6.0e-3 # [kg/s] oxidizer mass flow rate after slottling
-        if t < 2.0:
+        if t < 15.0:
             mox = mox1
         else:
             mox = mox2
@@ -342,9 +343,9 @@ if __name__ == "__main__":
 # %%
     inst.gen_img_list(FIG)
     print("Now generating animation...")
-    # anim = ArtistAnimation(FIG, inst.img_list, interval=PARAM_CALCOND["dt"]*1e+3)
-    # anim.save(os.path.join(inst.fld_name, "animation.mp4"), writer="ffmpeg", fps=10)
-    # print("Completed!")
+    anim = ArtistAnimation(FIG, inst.img_list, interval=PARAM_CALCOND["dt"]*1e+3)
+    anim.save(os.path.join(inst.fld_name, "animation.mp4"), writer="ffmpeg", fps=10)
+    print("Completed!")
 
     
 

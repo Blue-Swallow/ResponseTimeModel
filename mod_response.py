@@ -117,6 +117,7 @@ def func_dPc(t, Pc, mox, val, t_history, Vf_history, **cond):
     func_cstr = cond["func_CSTAR"]
     func_T = cond["func_T"]
     func_M = cond["func_M"]
+    eta = cond["eta"]
 
     Vox = func_Vox(Pc, mox, **cond)
     Vf = func_Vf(Pc, Vox)
@@ -129,7 +130,7 @@ def func_dPc(t, Pc, mox, val, t_history, Vf_history, **cond):
     else:
         mf = N *mod_shape.func_mf(r[~np.isnan(r)].size-1, r[~np.isnan(r)], rdot[~np.isnan(rdot)], **cond)
     of = mox/mf
-    cstr = func_cstr(of, Pc)
+    cstr = eta*func_cstr(of, Pc)
     T = func_T(of, Pc)
     R = Ru/(func_M(of, Pc)*1e-3)
     if t_history[-1] == t:    # in the case of calling this function to calculate "k0"
