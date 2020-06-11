@@ -236,9 +236,11 @@ def func_rdot(i, ri, r, val, **kwargs):
     if x[i] == 0:
         rdot0 = 0.0
     else:
-        rdot0 = Cr*np.power(G, z)*np.power(x[i], m)
+        # rdot0 = Cr*np.power(G, z)*np.power(x[i], m)
+        rdot0 = 10.0e-6*np.power(G, z)*np.power(self.x[i], m)*np.power(self.Pc*1.0e-5, -1)
     th = k*np.power(G, 0.8)/Pc
-    rdoti = rdot0 *np.sqrt(2/th) *np.sqrt(1 -1/th*(1 -np.exp(-th)))
+    # rdoti = rdot0 *np.sqrt(2/th) *np.sqrt(1 -1/th*(1 -np.exp(-th)))
+    rdoti = rdot0
     return(rdoti)
 
 def func_rdotn(i, ri, r, val, **kwargs):

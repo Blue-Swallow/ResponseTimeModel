@@ -83,13 +83,12 @@ class Main:
         if self.x[i] == 0:
             rdot0 = rdot_0
         else:
-            rdot0 = Cr*np.power(G, z)*np.power(self.x[i], m)
-            # rdot0 = 1.0e-7*n
-            # p.power(Pc, 0.5)*np.power(G, 0.1)*np.power(x[i], -0.2)
-        th = k*np.power(G, 0.8)/self.Pc
-        # rdoti = rdot0* np.sqrt(2/th*(1-(1-1/th*np.exp(-th))))
-        rdoti = rdot0 *np.sqrt(2/th) *np.sqrt(1 -1/th*(1 -np.exp(-th)))
-        # rdoti = rdot0
+            # rdot0 = Cr*np.power(G, z)*np.power(self.x[i], m) # origin formula
+            rdot0 = 10.0e-6*np.power(G, z)*np.power(self.x[i], m)*np.power(self.Pc*1.0e-5, -1)
+        th = k*np.power(G, 0.8)/self.Pc       # equation obtained from dissertation written by Hashimoto
+        # th = k*np.power(G, 0.8)/np.power(self.Pc, 0.5)      # test equation
+        # rdoti = rdot0 *np.sqrt(2/th) *np.sqrt(1 -1/th*(1 -np.exp(-th)))
+        rdoti = rdot0
         return(rdoti)
 
     def func_r(self, i, rdoti):
@@ -226,7 +225,7 @@ if __name__ == "__main__":
 
 
     Pc_range = np.arange(0.25e+6, 1.50e+6, 0.25e+6)
-    Vox = 1.0 # [m/s] oxidizer port velocity
+    Vox = 30.0 # [m/s] oxidizer port velocity
     fig1 = plt.figure()
     fig2 = plt.figure()
     ax1 = fig1.add_subplot(111)
