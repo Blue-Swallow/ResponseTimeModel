@@ -309,7 +309,7 @@ if __name__ == "__main__":
                     "func_gamma": Read_datset(CEA_FLDPATH).gen_func("GAMMAs_c")     # specific heat ratio interpolate function
                     }
 
-    PARAM_PLOT = {"interval": 0.01,     # [s] plot interval of movie
+    PARAM_PLOT = {"interval": 0.1,     # [s] plot interval of movie
                   "y_max": 5.0e-3,      # [m] plot width of fuel regression shape
                  }
 
