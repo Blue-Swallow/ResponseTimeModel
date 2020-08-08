@@ -1,2 +1,6 @@
 */
+*.png
+*.jpg
+*.org
+main_sim_*
 !/cea_db/*

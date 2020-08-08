@@ -243,9 +243,10 @@ class Read_datset:
 
 if __name__ == "__main__":
 
-    dbfld_path = os.path.join("cea_db", "sample", "csv_database")
+    dbfld_path = os.path.join("cea_db", "GOX_CurableResin", "csv_database")
     inst2 = Read_datset(dbfld_path)
     func = inst2.gen_func("CSTAR", extraporate="linear")
     func(100, 1.0e+6)
-    of_range = np.arange(0.01, 100, 0.1)
+    of_range = np.arange(0.01, 5.1, 0.1)
     plt.plot(of_range, np.array([func(of, 1.0e+6) for of in of_range]))
+    plt.savefig("cstr.jpg", dpi=300)
