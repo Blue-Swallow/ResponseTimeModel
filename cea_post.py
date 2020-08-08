@@ -242,7 +242,6 @@ class Read_datset:
 
 
 if __name__ == "__main__":
-
     dbfld_path = os.path.join("cea_db", "GOX_CurableResin", "csv_database")
     inst2 = Read_datset(dbfld_path)
     func = inst2.gen_func("CSTAR", extraporate="linear")
