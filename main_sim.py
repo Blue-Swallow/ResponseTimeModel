@@ -275,7 +275,7 @@ if __name__ == "__main__":
     FUNCLIST_CEA = {"func_T": Read_datset(CEA_FLDPATH).gen_func("T_c"),             # gas temeratur interporate function
                     "func_CSTAR": Read_datset(CEA_FLDPATH).gen_func("CSTAR"),       # c* interporate function
                     "func_M": Read_datset(CEA_FLDPATH).gen_func("M_c"),             # molecular weight interpolate function
-                    "func_cp": Read_datset(CEA_FLDPATH).gen_func("cp_c"),           # spcific heat interpolate function
+                    "func_cp": Read_datset(CEA_FLDPATH).gen_func("Cp_c"),           # spcific heat interpolate function
                     "func_gamma": Read_datset(CEA_FLDPATH).gen_func("GAMMAs_c")     # specific heat ratio interpolate function
                     }
 
