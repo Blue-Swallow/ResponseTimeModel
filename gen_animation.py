@@ -6,12 +6,15 @@ import numpy as np
 import pandas as pd
 import json
 from datetime import datetime
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.animation import ArtistAnimation
 from tqdm import tqdm
 from cea_post import Read_datset
 import mod_response
 import mod_shape
+
+matplotlib.style.use("tj_origin.mplstyle")
 
 # %%
 class Main:
@@ -145,6 +148,11 @@ class Main:
         ax5 = fig.add_subplot(235)
         ax6 = fig.add_subplot(236)
         fig.subplots_adjust(wspace=0.4)
+        fig.subplots_adjust(hspace=0.2)
+        fig.subplots_adjust(bottom=0.075)
+        fig.subplots_adjust(top=0.925) 
+        fig.subplots_adjust(right=0.95)
+        fig.subplots_adjust(left=0.05)
 
         if "intrv" in kwargs:
             intrv = kwargs["intrv"]
@@ -251,23 +259,115 @@ class Main:
         return self.img_list
 
 
-# %%
-if __name__ == "__main__":
-    # import matplotlib
-    # matplotlib.style.use("tj_origin.mplstyle")
-# %%
-    # FLD_NAME = "2020_0721_173054"
-    FLD_NAME = "2020_0728_203922"
-    inst = Main(FLD_NAME)
+class Sub_pcmox_r(Main):
+    def _plot_(self, t, dic_axis):
+        ax1 = dic_axis["ax1"]
+        ax2 = dic_axis["ax2"]
+        ax2_sub = dic_axis["ax2_sub"]
+
+        x = self.x
+        pitch = self.cond_ex["pitch"]
+        x_front = np.sort(-x)
+        d = self.cond_ex["d"]
+        index = np.where(self.t_history == t)[0][0]
+        t_history = self.t_history[:(index+1)]
+        
+        r = self.r_history[index]
+        r_front = np.array([0.0 for i in self.r_history[index]])
+        img1 = ax1.plot(np.append(x_front, x)*1.0e+3, (np.append(r_front, r)+d/2)*1.0e+3, color="b")\
+                + ax1.plot(np.append(x_front, x)*1.0e+3, -(np.append(r_front, r)+d/2)*1.0e+3, color="b")\
+                + ax1.plot(np.append(x_front, x)*1.0e+3, (np.append(r_front, r)+d/2 +pitch)*1.0e+3, color="b")\
+                + ax1.plot(np.append(x_front, x)*1.0e+3, -(np.append(r_front, r)+d/2 +pitch)*1.0e+3, color="b")\
+                + ax1.plot(np.append(x_front, x)*1.0e+3, (np.append(r_front, r)+d/2 -pitch)*1.0e+3, color="b")\
+                + ax1.plot(np.append(x_front, x)*1.0e+3, -(np.append(r_front, r)+d/2 -pitch)*1.0e+3, color="b")
+
+        Pc_history = self.Pc_history[:(index+1)]
+        mox_history = self.mox_history[:(index+1)]
+        img2 = ax2_sub.plot(t_history, mox_history*1.0e+3, color="b", label="$m_{ox}$")\
+                + ax2.plot(t_history, Pc_history*1.0e-6, color="r", label="$P_c$")
+        return img1, img2
+
+
+    def gen_img_list(self, fig, **kwargs):
+        """ Stuckking the image file to img_list
+        
+        Parameters
+        ----------
+        r : 1d-ndarray of float
+            radial fuel regression distance
+        rdot : 1d-ndarray of float
+            radial fuel regression rate
+        img_list : list of matplotlib.pyplot.plot
+            list of plot image which contains radial fuel regression plot and one more other plot
+        
+        Return
+        ----------
+        img_list: list of matplotlib.pyplot.plot
+            image list after stacked new plot image
+        """
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+        # fig.subplots_adjust(wspace=0.2)
+
+        if "intrv" in kwargs:
+            intrv = kwargs["intrv"]
+        else:
+            intrv = self.plot_param["interval"]
+        x_max = self.cond_cal["x_max"]
+        # y_max = self.plot_param["y_max"]
+        dt = self.cond_cal["dt"]
+        t_end = self.cond_cal["t_end"]
+
+        # Regression shape
+        ax1.set_xlabel("Axial distance $x$ [mm]")
+        ax1.set_ylabel("Regression shape [mm]")
+        x_begin = -x_max/4*1.0e+3
+        x_end = x_max*1.0e+3
+        y_begin = -(x_end-x_begin)/2
+        y_end = (x_end-x_begin)/2
+        ax1.set_ylim(y_begin, y_end)
+        ax1.set_xlim(x_begin, x_end)
+        ax1.grid()
+        
+        # Chamber pressure v.s. t
+        ax2.set_xlabel("Time $t$ [s]")
+        ax2.set_ylabel("Chamber pressure $P_c$ [MPa]")
+        ax2.set_xlim(0, t_end)
+        ax2.set_ylim(0, 1.1 *self.Pc_history.max()*1e-6)
+        ax2.grid()
+        ax2_sub = ax2.twinx()
+        ax2_sub.set_ylabel("Oxidizer mass flow rate $\dot m_{ox}}}$ [g/s]")
+        ax2_sub.set_ylim(0, 1.2 *self.mox_history.max()*1e+3)
+ 
+        dic_axis = {"ax1": ax1,
+                    "ax2": ax2,
+                    "ax2_sub": ax2_sub
+                    }
+        print("Make list of image file for animation")
+        for t in tqdm(self.t_history):
+            if int(t/dt) % int(intrv/dt) == 0 or t==0.0:
+                title = ax1.text(x_end/2, y_end*1.1, "t={} s".format(round(t,3)), fontsize="large")
+                img1, img2 = self._plot_(t, dic_axis)
+                self.img_list.append(img1 + img2 + [title])
+        # add legend
+        hl2, label2 = [ax2.get_legend_handles_labels()[0][0], ax2.get_legend_handles_labels()[1][0]]
+        hl2_sub, label2_sub = [ax2_sub.get_legend_handles_labels()[0][0], ax2_sub.get_legend_handles_labels()[1][0]]
+        ax2.legend([hl2, hl2_sub], [label2, label2_sub], loc="lower right")
+        return self.img_list
+
 
 # %%
-    # FIG_TMP = plt.figure(figsize=(28,16))
-    # inst.gen_img_list(FIG_TMP, intrv=1.0)
+if __name__ == "__main__":
+# %%
+    # FLD_NAME = "2020_0721_173054"
+    FLD_NAME = "2020_0720_142011_test_for_animation"
+
 # %%
     """ Part of Generating a Movie
     """
+    inst = Main(FLD_NAME)
     INTERVAL = 0.1 # [s]
-    FIG = plt.figure(figsize=(28,16))
+    FIG = plt.figure(figsize=(37,20))
     inst.gen_img_list(FIG, intrv=INTERVAL)
     animf_name = "animation_" + datetime.now().strftime("%Y_%m%d_%H%M%S") + ".mp4"
     print("Now generating animation...")
@@ -277,3 +377,15 @@ if __name__ == "__main__":
     print("Completed!")
 
 #%%
+    """ Part of Generating a Movie of Pc, mox and regression shape history
+    """
+    # inst2 = Sub_pcmox_r(FLD_NAME)
+    # INTERVAL = 0.1 # [s]
+    # FIG = plt.figure(figsize=(18,9))
+    # inst2.gen_img_list(FIG, intrv=INTERVAL)
+    # animf_name = "animation_" + datetime.now().strftime("%Y_%m%d_%H%M%S") + ".mp4"
+    # print("Now generating animation...")
+    # anim = ArtistAnimation(FIG, inst2.img_list, interval=inst2.cond_cal["dt"]*1e+3)
+    # anim.save(os.path.join(inst2.fld_name, animf_name), writer="ffmpeg", fps=1/INTERVAL)
+    # # anim.save(os.path.join(inst.fld_name, animf_name), writer="ffmpeg")
+    # print("Completed!")
