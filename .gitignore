@@ -5,4 +5,4 @@
 *.ipynb
 *.old
 main_sim_*
-!/cea_db/*
+!/cea_db/GOX_CurableResin
