@@ -204,7 +204,7 @@ font.family        : Times New Roman
 ## settings for axes and ticks. Special text sizes can be defined
 ## relative to font.size, using the following values: xx-small, x-small,
 ## small, medium, large, x-large, xx-large, larger, or smaller
-font.size           : 22
+font.size           : 24
 font.serif         : Times New Roman
 #font.serif          : DejaVu Serif, Bitstream Vera Serif, Computer Modern Roman, New Century Schoolbook, Century Schoolbook L, Utopia, ITC Bookman, Bookman, Nimbus Roman No9 L, Times New Roman, Times, Palatino, Charter, serif
 #font.sans-serif     : DejaVu Sans, Bitstream Vera Sans, Computer Modern Sans Serif, Lucida Grande, Verdana, Geneva, Lucid, Arial, Helvetica, Avant Garde, sans-serif
@@ -445,26 +445,26 @@ figure.edgecolor : white      ## figure edgecolor
                                ## the pyplot interface before emitting a warning.
                                ## If less than one this feature is disabled.
 ## The figure subplot parameters.  All dimensions are a fraction of the
-#figure.subplot.left    : 0.125  ## the left side of the subplots of the figure
-#figure.subplot.right   : 0.9    ## the right side of the subplots of the figure
-#figure.subplot.bottom  : 0.11   ## the bottom of the subplots of the figure
-#figure.subplot.top     : 0.88   ## the top of the subplots of the figure
-#figure.subplot.wspace  : 0.2    ## the amount of width reserved for space between subplots,
+figure.subplot.left    : 0.1  ## the left side of the subplots of the figure
+figure.subplot.right   : 0.9    ## the right side of the subplots of the figure
+figure.subplot.bottom  :0.2   ## the bottom of the subplots of the figure
+figure.subplot.top     : 0.9   ## the top of the subplots of the figure
+figure.subplot.wspace  : 0.3    ## the amount of width reserved for space between subplots,
                                  ## expressed as a fraction of the average axis width
-#figure.subplot.hspace  : 0.2    ## the amount of height reserved for space between subplots,
+figure.subplot.hspace  : 0.3    ## the amount of height reserved for space between subplots,
                                  ## expressed as a fraction of the average axis height
 
 ## Figure layout
-figure.autolayout : True     ## When True, automatically adjust subplot
+# figure.autolayout : True     ## When True, automatically adjust subplot
                                ## parameters to make the plot fit the figure
                                ## using `tight_layout`
 # figure.constrained_layout.use: True ## When True, automatically make plot
                                       ## elements fit on the figure. (Not compatible
                                       ## with `autolayout`, above).
-#figure.constrained_layout.h_pad : 0.04167 ## Padding around axes objects. Float representing
-#figure.constrained_layout.w_pad : 0.04167 ##  inches. Default is 3./72. inches (3 pts)
-#figure.constrained_layout.hspace : 0.02   ## Space between subplot groups. Float representing
-#figure.constrained_layout.wspace : 0.02   ##  a fraction of the subplot widths being separated.
+# figure.constrained_layout.h_pad : 0.04167 ## Padding around axes objects. Float representing
+# figure.constrained_layout.w_pad : 0.04167 ##  inches. Default is 3./72. inches (3 pts)
+# figure.constrained_layout.hspace : 0.2   ## Space between subplot groups. Float representing
+# figure.constrained_layout.wspace : 0.4   ##  a fraction of the subplot widths being separated.
 
 #### IMAGES
 #image.aspect : equal             ## equal | auto | a number
@@ -526,11 +526,11 @@ errorbar.capsize : 5             ## length of end cap on error bars in pixels
 ## the default savefig params can be different from the display params
 ## e.g., you may want a higher resolution, or to make the figure
 ## background white
-savefig.dpi         : 600   ## figure dots per inch or 'figure'
+# savefig.dpi         : 300   ## figure dots per inch or 'figure'
 savefig.facecolor   : white    ## figure facecolor when saving
 savefig.edgecolor   : white    ## figure edgecolor when saving
 savefig.format      : svg      ## png, ps, pdf, svg
-savefig.bbox        : standard ## 'tight' or 'standard'.
+savefig.bbox        : tight ## 'tight' or 'standard'.
                                 ## 'tight' is incompatible with pipe-based animation
                                 ## backends but will workd with temporary file based ones:
                                 ## e.g. setting animation.writer to ffmpeg will not work,
@@ -618,6 +618,7 @@ savefig.bbox        : standard ## 'tight' or 'standard'.
 #animation.avconv_path:  avconv    ## Path to avconv binary. Without full path
                                    ## $PATH is searched
 #animation.avconv_args:            ## Additional arguments to pass to avconv
+# animation.convert_path: C:\Program Files\ImageMagick-7.0.9-Q16\magick.exe
 #animation.convert_path:  convert  ## Path to ImageMagick's convert binary.
                                    ## On Windows use the full path since convert
                                    ## is also the name of a system tool.
