@@ -9,9 +9,12 @@ Generate the list of plot which is used for making animation file.
 """
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.animation import ArtistAnimation
 from tqdm import tqdm
+
+matplotlib.style.use("tj_origin.mplstyle")
 
 def _plot_(t, dic_axis, dic_dat, **cond):
     """ Function for plotting the simulated history
@@ -122,6 +125,11 @@ def gen_img_list(fig, img_list, dic_dat, **cond):
     ax5 = fig.add_subplot(235)
     ax6 = fig.add_subplot(236)
     fig.subplots_adjust(wspace=0.4)
+    fig.subplots_adjust(hspace=0.2)
+    fig.subplots_adjust(bottom=0.075)
+    fig.subplots_adjust(top=0.925) 
+    fig.subplots_adjust(right=0.95)
+    fig.subplots_adjust(left=0.05)
 
     if "intrv" in cond:
         intrv = cond["intrv"]
