@@ -177,6 +177,11 @@ class Main:
                 mf =  N *mod_shape.func_mf(r[~np.isnan(r)].size-1, r[~np.isnan(r)], rdot[~np.isnan(rdot)], Vf=Vf, **cond)
             else:
                 mf =  N *mod_shape.func_mf(r[~np.isnan(r)].size-1, r[~np.isnan(r)], rdot[~np.isnan(rdot)], Vf=Vf, **cond)
+            if cond["Af_modify"]:
+                coef_Afmod = (np.power(self.cond_ex["Df"], 2) - N*np.power(self.cond_ex["d"], 2))/(N*(np.power(self.cond_ex["pitch"],2)-np.power(self.cond_ex["d"], 2)))
+                mf = mf*coef_Afmod
+            else:
+                pass
             self.mf_history = np.append(self.mf_history, mf)
             if mf<=0.0:
                 of = np.nan
@@ -235,7 +240,7 @@ if __name__ == "__main__":
                     "Df": 38e-3,        # [m] fuel outer diameter
                     "d_exit": 1.0e-3,   # [m] port exit diameter
                     "depth": 2.0e-3,    # [m] depth of expansion region of port exit
-                    "pitch": 2.0e-3,    # [m] pitch between each ports
+                    "pitch": 1.7e-3,    # [m] pitch between each ports
                     "Dt": 6.2e-3,       # [m] nozzle throat diameter
                     # "Dt": 6.5e-3,       # [m] nozzle throat diameter
                     "Lci": 20.0e-3,     # [m] initial chamber length
@@ -244,7 +249,7 @@ if __name__ == "__main__":
                     "T_ox": 300,        # [K] oxidizer temperature
                     "Ru": 8.3144598,    # [J/mol-K] Universal gas constant
                     "Pci": 0.1013e+6,   # [Pa] initial chamber pressure
-                    "eta": 0.926         # [-] efficiency of specific exhaust velocity
+                    "eta": 1.111325         # [-] efficiency of specific exhaust velocity
                     }
 
     # Parameters of calculation condition
@@ -255,7 +260,8 @@ if __name__ == "__main__":
                      "t_end": 30.85,     # [s] end time of calculation
                      "x_max": 15.0e-3,   # [m] maximum calculation region
                     #  "x_max": 10.0e-3,   # [m] maximum calculation region
-                     "Vf_mode": False  # whether calculation uses Vf (radial integretion) or not in mf calculation
+                     "Vf_mode": False,  # whether calculation uses Vf (radial integretion) or not in mf calculation
+                     "Af_modify": True  # whether modify the effect of 2D idealization for burning area, Af, or not.
                     }
 
     # Constant of fuel regression model and experimental regression rate formula
@@ -296,8 +302,8 @@ if __name__ == "__main__":
         mox: float
             oxidizer mass flow rate [kg/s]
         """
-        mox1 = 3.5e-3 # [kg/s] oxidizer mass flow rate before slottling
-        mox2 = 7.5e-3 # [kg/s] oxidizer mass flow rate after slottling
+        mox1 = 2.0e-3 # [kg/s] oxidizer mass flow rate before slottling
+        mox2 = 4.5e-3 # [kg/s] oxidizer mass flow rate after slottling
         if t < 5.0:
             mox = mox1
         elif 5.0<=t and t<14.0:
@@ -363,7 +369,7 @@ if __name__ == "__main__":
 
 # %%  Generate instance of simulation, excete calculation and output all of the results
     inst = Main(PARAM_EXCOND, PARAM_CALCOND, PARAM_MODELCONST, FUNCLIST_CEA, PARAM_PLOT)
-    FIG = plt.figure(figsize=(28,16))
+    FIG = plt.figure(figsize=(37,20))
     inst.exe(FUNC_MOX)
     print("CFL = {}".format(inst.cond_cal["CFL"]))
     DIC_RESULT  = {"t": inst.t_history,
