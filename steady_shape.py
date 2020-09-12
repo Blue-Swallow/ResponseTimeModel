@@ -159,7 +159,12 @@ def plot_r(ax1, x, r, Pc, Vox, mf, **cond):
     # legend_text = r"$P_c$=" + str(round(Pc*1e-6,2)) + " MPa, "\
     #              + r"$V_{ox}$=" + str(round(Vox, 1)) + " m/s, "\
     #              + r"$\dot m_f$=" + str(round(mf*1e+6, 1)) + " mg/s"
-    legend_text = r"$P_c$=" + str(round(Pc*1e-6,2)) + " MPa"
+    if cond["mode"] == "Pc":
+        legend_text = r"$P_c$=" + str(round(Pc*1e-6,2)) + " MPa"
+    elif cond["mode"] == "Vox":
+        legend_text = r"$V_{ox}}$=" + str(round(Vox,2)) + " m/s"
+    else:
+        legend_text = ""
     ax1.plot(x*1.0e+3, r*1.0e+3, label=legend_text)
     ax1.set_xlabel("Axial distance $x$ [mm]")
     ax1.set_ylabel("Radial regression distance $r$ [mm]")
@@ -168,7 +173,7 @@ def plot_r(ax1, x, r, Pc, Vox, mf, **cond):
     ax1.legend(fontsize=24)
     ax1.set_ylim(0,y_max*1.0e+3)
     # ax1.set_xlim(0,x_max*1.0e+3)
-    ax1.set_xlim(0, 15.0)
+    ax1.set_xlim(0, x_max*1e+3)
     ax1.grid()
     return ax1
     # fig1.savefig(os.path.joint(fldname, "r_steady.png"))
@@ -177,7 +182,12 @@ def plot_r(ax1, x, r, Pc, Vox, mf, **cond):
 def plot_rdot(ax2, x, rdot, Pc, Vox, **cond):
     x_max = cond["x_max"]
     y_max = cond["y_max_rdot"]
-    legend_text = r"$P_c$=" + str(round(Pc*1e-6,2)) + " MPa," + r"$V_{ox}$=" + str(round(Vox, 1)) + " m/s"
+    if cond["mode"] == "Pc":
+        legend_text = r"$P_c$=" + str(round(Pc*1e-6,2)) + " MPa"
+    elif cond["mode"] == "Vox":
+        legend_text = r"$V_{ox}}$=" + str(round(Vox,2)) + " m/s"
+    else:
+        legend_text = ""
     ax2.plot(x*1.0e+3, rdot*1.0e+3, label=legend_text)
     ax2.set_xlabel("Axial distance $x$ [mm]")
     ax2.set_ylabel("Radial regression rate $\dot r$ [mm/s]")
@@ -194,16 +204,21 @@ def plot_rdot(ax2, x, rdot, Pc, Vox, **cond):
 
 if __name__ == "__main__":
 #%% 計算パラメータの定義
+    Pc_range = np.arange(0.25e+6, 1.50e+6, 0.25e+6)
+    Vox_range =  np.arange(20, 81, 10)
+    Vox = 30.0 # [m/s] oxidizer port velocity
+    Pc = 0.25e+6 # [MPa] chamber pressure
+
     PARAM = {"d": 0.3e-3,       # [m] port diameter
              "rho_f": 1190,     # [kg/m^3] solid fuel density
              "M_ox": 32.0e-3,   # [kg/mol]
              "T": 300,          # [K] oxidizer tempreature
-            #  "Cr": 4.58e-6,     
-             "Cr": 3.01e-6,
-            #  "Cr": 20.0e-6,
-             "z": 0.9,
-            # "z": 0.6,
-             "m": -0.2,
+             "Cr": 15.38e-6,
+            #  "Cr": 5.5e-6,
+             "z": 0.333,
+            # "z": 1.0,
+             "m": -0.339,
+            #  "m": -0.2,
              "k": 3.0e+4,
              "C1": 1.39e-7,  # experimental constant of experimental regression rate formula
              "C2": 1.61e-9,  # experimental constant of experimental regression rate formula
@@ -214,13 +229,12 @@ if __name__ == "__main__":
              "y_max_rdot": 2.0e-3,   # [m] maximum plot width of radial regression rate
              "r_0": 0.0,        # r=0.0 when x = 0, boudanry condition
              "rdot_0": 0.0,     # rdot=0 when x = 0, boundary condition
-             "Vf_mode": False   # mode selection using axial or radial integretioin for mf calculation
+             "Vf_mode": False,   # mode selection using axial or radial integretioin for mf calculation
+             "Vox_fix": Vox,    # [m/s] fixed oxidizer port velocity when Pc is varird.
+             "Pc_fix": Pc       # [Pa] fixed chamber pressure when Pc is varird.
             }
 
-    Pc_range = np.arange(0.25e+6, 1.50e+6, 0.25e+6)
-    Vox_range =  np.arange(20, 81, 10)
-    Vox = 30.0 # [m/s] oxidizer port velocity
-    Pc = 0.25e+6 # [MPa] chamber pressure
+#%% 計算の実行と出図
     fig1 = plt.figure()
     fig2 = plt.figure()
     fig3 = plt.figure()
@@ -237,14 +251,14 @@ if __name__ == "__main__":
         inst1 = Main(Pc_tmp, Vox, **PARAM)
         x, r, rdot = inst1.exe()
         mf = inst1.func_mf(inst1.x.size-1)
-        ax1 = plot_r(ax1, x, r, Pc_tmp, Vox, mf, **PARAM)
-        ax2 = plot_rdot(ax2, x, rdot, Pc_tmp, Vox, **PARAM)
+        ax1 = plot_r(ax1, x, r, Pc_tmp, Vox, mf, **PARAM, mode="Pc")
+        ax2 = plot_rdot(ax2, x, rdot, Pc_tmp, Vox, **PARAM, mode="Pc")
     for Vox_tmp in Vox_range:
         inst2 = Main(Pc, Vox_tmp, **PARAM)
         x, r, rdot = inst2.exe()
         mf = inst2.func_mf(inst2.x.size-1)
-        ax3 = plot_r(ax3, x, r, Pc, Vox_tmp, mf, **PARAM)
-        ax4 = plot_rdot(ax4, x, rdot, Pc, Vox_tmp, **PARAM)
+        ax3 = plot_r(ax3, x, r, Pc, Vox_tmp, mf, **PARAM, mode="Vox")
+        ax4 = plot_rdot(ax4, x, rdot, Pc, Vox_tmp, **PARAM, mode="Vox")
     fig1.savefig(os.path.join(fldname, "r_steady_Pc.png"))
     fig2.savefig(os.path.join(fldname, "rdot_steady_Pc.png"))
     fig3.savefig(os.path.join(fldname, "r_steady_Vox.png"))
