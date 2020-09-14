@@ -11,12 +11,14 @@ This method enable to reproduce a long response time at throttling operation.
 """
 # %%
 import os
+import sys
 import numpy as np
 import pandas as pd
 import json
 from datetime import datetime
 import matplotlib.pyplot as plt
 from matplotlib.animation import ArtistAnimation
+from scipy.interpolate import CubicSpline
 from tqdm import tqdm
 from cea_post import Read_datset
 import mod_response
@@ -74,7 +76,7 @@ class Main:
         image list which is used for generating animation.
     """
 
-    def __init__(self, cond_ex, cond_cal, const_model, funclist_cea, plot_param):
+    def __init__(self, cond_ex, cond_cal, const_model, cea_fldpath, funclist_cea, plot_param, fldname=False):
         """        
         Parameters
         ----------
@@ -84,17 +86,23 @@ class Main:
             dictionary of calculation condition
         const_model : dic
             dictionary of regression model constants
+        cea_fldpath : string
+            folder path of cea data-base
         funclist_cea : dic
             dictionar of cea data-base information
         plot_param : dic
             dictionary of the parameters of plot and animation
+        fldname : string, Optional
+            the name of folder which will contain calculation result, by default None
         """
+        self.fld_name = fldname
         self.cond_ex = cond_ex
         self.cond_ex["a"] = 1 -np.power(cond_ex["d"]/cond_ex["Df"], 2)*cond_ex["N"]     # [-] fuel filling rate
         self.cond_ex["Vci"] = np.pi*np.power(cond_ex["Df"], 2)/4 * cond_ex["Lci"]       # [m^3] initial chamber volume
         self.cond_ex["R_ox"] = cond_ex["Ru"]/cond_ex["M_ox"]      # [J/kg-K] oxidizer gas constant
         self.cond_cal = cond_cal
         self.const_model = const_model
+        self.cea_fldpath = cea_fldpath
         self.funclist_cea = funclist_cea
         self.plot_param = plot_param
         self._initialize_()
@@ -105,7 +113,10 @@ class Main:
         """
         x_max = self.cond_cal["x_max"]
         dx = self.cond_cal["dx"]
-        self.fld_name = datetime.now().strftime("%Y_%m%d_%H%M%S")   # folder name which contain animation and figure of calculation result
+        if self.fld_name:
+            pass
+        else:
+            self.fld_name = datetime.now().strftime("%Y_%m%d_%H%M%S")   # folder name which contain animation and figure of calculation result
         self.img_list = []  # define the list in wihch images of plot figure are stacked
         self.t_history = np.array([])
         self.Pc_history = np.array([])
@@ -125,7 +136,8 @@ class Main:
         os.makedirs(self.fld_name)
         dic_json = {"PARAM_EXCOND": self.cond_ex,
                     "PARAM_CALCOND": self.cond_cal,
-                    "PARAM_MODELCONST": self.const_model
+                    "PARAM_MODELCONST": self.const_model,
+                    "CEA_FLDPATH": self.cea_fldpath
                     }
         with open(os.path.join(self.fld_name, "cond.json"), "w") as f:
             json.dump(dic_json, f, ensure_ascii=False, indent=4)
@@ -232,87 +244,104 @@ class Main:
         return self.img_list
 
 
+def read_cond():
+    name_mox_csv = "mox.csv"
+    name_cond_py = "cond.py" 
+    fldname = input("Please input the folder name which contain calculating condition such as cond.json and func_mox.py\n>>")
+    if os.path.exists(fldname):
+        if os.path.exists(os.path.join(fldname, name_cond_py)):
+            sys.path.append(os.path.join(os.path.dirname(__file__), fldname))
+            import cond
+            dic_cond = {"PARAM_EXCOND": cond.PARAM_EXCOND,
+                        "PARAM_CALCOND": cond.PARAM_CALCOND,
+                        "PARAM_MODELCONST": cond.PARAM_MODELCONST,
+                        "CEA_FLDPATH": cond.CEA_FLDPATH,
+                        "FUNCLIST_CEA": cond.FUNCLIST_CEA,
+                        "PARAM_PLOT": cond.PARAM_PLOT
+                        }
+        else:
+            print("There is no python module of calculation condition, \"{}\"".format(name_cond_py))
+            sys.eixt()
+        if dic_cond["PARAM_CALCOND"]["use_mox_csv"]:
+            if os.path.exists(os.path.join(fldname, name_mox_csv)):
+                df_mox = pd.read_csv(os.path.join(fldname, name_mox_csv), header=0, skiprows=[1,])
+                df_mox.mox = df_mox.mox * 1.0e-3    # convert unit [g/s] to [kg/s]
+                func_tmp = CubicSpline(df_mox.t, df_mox.mox, bc_type="clamped", extrapolate=True)
+                def func_mox(t):
+                    mox = float(func_tmp(t))
+                    return mox
+            else:
+                print("There is no csv data of mox history, \"{}\"".format(name_mox_csv))
+                sys.eixt()
+        else:
+            func_mox = cond.FUNC_MOX    # read function of mox history from cond.py
+
+    else:
+        print("There is no such a folder, \"{}\"".format(fldname))
+        sys.exit()
+    return fldname, dic_cond, func_mox
+
+
+
+
 # %%
 if __name__ == "__main__":
-    # Parameters of experimental condition
-    PARAM_EXCOND = {"d": 0.272e-3,        # [m] port diameter
-                    "N": 433,           # [-] the number of port
-                    "Df": 38e-3,        # [m] fuel outer diameter
-                    "d_exit": 1.0e-3,   # [m] port exit diameter
-                    "depth": 2.0e-3,    # [m] depth of expansion region of port exit
-                    "pitch": 1.7e-3,    # [m] pitch between each ports
-                    "Dt": 6.2e-3,       # [m] nozzle throat diameter
-                    # "Dt": 6.5e-3,       # [m] nozzle throat diameter
-                    "Lci": 20.0e-3,     # [m] initial chamber length
-                    "rho_f": 1190,      # [kg/m^3] solid fuel density
-                    "M_ox": 32.0e-3,    # [kg/mol] oxidizer mass per unit mole
-                    "T_ox": 300,        # [K] oxidizer temperature
-                    "Ru": 8.3144598,    # [J/mol-K] Universal gas constant
-                    "Pci": 0.1013e+6,   # [Pa] initial chamber pressure
-                    "eta": 1.111325         # [-] efficiency of specific exhaust velocity
-                    }
+    ##### Following Commented Section is to Conduct Debugging #####
 
-    # Parameters of calculation condition
-    PARAM_CALCOND = {"dt": 0.001,       # [s] time resolution
-                     "dx": 0.1e-4,      # [m] space resolution
-                    #  "dx": 0.1e-3,      # [m] space resolution
-                    #  "t_end": 1.0,     # [s] end time of calculation
-                     "t_end": 30.85,     # [s] end time of calculation
-                     "x_max": 15.0e-3,   # [m] maximum calculation region
-                    #  "x_max": 10.0e-3,   # [m] maximum calculation region
-                     "Vf_mode": False,  # whether calculation uses Vf (radial integretion) or not in mf calculation
-                     "Af_modify": True  # whether modify the effect of 2D idealization for burning area, Af, or not.
-                    }
+    # # Parameters of experimental condition
+    # PARAM_EXCOND = {"d": 0.272e-3,        # [m] port diameter
+    #                 "N": 433,           # [-] the number of port
+    #                 "Df": 38e-3,        # [m] fuel outer diameter
+    #                 "d_exit": 1.0e-3,   # [m] port exit diameter
+    #                 "depth": 2.0e-3,    # [m] depth of expansion region of port exit
+    #                 "pitch": 1.7e-3,    # [m] pitch between each ports
+    #                 "Dt": 6.2e-3,       # [m] nozzle throat diameter
+    #                 # "Dt": 6.5e-3,       # [m] nozzle throat diameter
+    #                 "Lci": 20.0e-3,     # [m] initial chamber length
+    #                 "rho_f": 1190,      # [kg/m^3] solid fuel density
+    #                 "M_ox": 32.0e-3,    # [kg/mol] oxidizer mass per unit mole
+    #                 "T_ox": 300,        # [K] oxidizer temperature
+    #                 "Ru": 8.3144598,    # [J/mol-K] Universal gas constant
+    #                 "Pci": 0.1013e+6,   # [Pa] initial chamber pressure
+    #                 "eta": 1.111325         # [-] efficiency of specific exhaust velocity
+    #                 }
 
-    # Constant of fuel regression model and experimental regression rate formula
-    PARAM_MODELCONST = {"Cr": 20.0e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
-                        # "Cr": 3.01e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
-                        # "Cr": 4.58e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
-                        "z": 0.6,       # exponent constant of propellant mass flux, G.
-                        "m": -0.2,      # exponent constant of distance from leading edge of fuel, x.
-                        "k": 3.0e+4,    # experimental constant, which multiply on G when calculate theta, which reflect the effect of leading edge of boundary layer 
-                        "C1": 1.39e-7,  # experimental constant of experimental regression rate formula
-                        "C2": 1.61e-9,  # experimental constant of experimental regression rate formula
-                        "n": 1.0        # experimental exponent constant of pressure
-                        }
+    # # Parameters of calculation condition
+    # PARAM_CALCOND = {"dt": 0.001,       # [s] time resolution
+    #                  "dx": 0.1e-4,      # [m] space resolution
+    #                 #  "dx": 0.1e-3,      # [m] space resolution
+    #                 #  "t_end": 1.0,     # [s] end time of calculation
+    #                  "t_end": 30.85,     # [s] end time of calculation
+    #                  "x_max": 15.0e-3,   # [m] maximum calculation region
+    #                 #  "x_max": 10.0e-3,   # [m] maximum calculation region
+    #                  "Vf_mode": False,  # whether calculation uses Vf (radial integretion) or not in mf calculation
+    #                  "Af_modify": True  # whether modify the effect of 2D idealization for burning area, Af, or not.
+    #                 }
+
+    # # Constant of fuel regression model and experimental regression rate formula
+    # PARAM_MODELCONST = {"Cr": 20.0e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
+    #                     # "Cr": 3.01e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
+    #                     # "Cr": 4.58e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
+    #                     "z": 0.6,       # exponent constant of propellant mass flux, G.
+    #                     "m": -0.2,      # exponent constant of distance from leading edge of fuel, x.
+    #                     "k": 3.0e+4,    # experimental constant, which multiply on G when calculate theta, which reflect the effect of leading edge of boundary layer 
+    #                     "C1": 1.39e-7,  # experimental constant of experimental regression rate formula
+    #                     "C2": 1.61e-9,  # experimental constant of experimental regression rate formula
+    #                     "n": 1.0        # experimental exponent constant of pressure
+    #                     }
     
-    # Function list of NASA-CEA calculation result
-    CEA_FLDPATH = os.path.join("cea_db", "GOX_CurableResin", "csv_database")        # folder path, which contain csv data-base of CEA results
-    FUNCLIST_CEA = {"func_T": Read_datset(CEA_FLDPATH).gen_func("T_c"),             # gas temeratur interporate function
-                    "func_CSTAR": Read_datset(CEA_FLDPATH).gen_func("CSTAR"),       # c* interporate function
-                    "func_M": Read_datset(CEA_FLDPATH).gen_func("M_c"),             # molecular weight interpolate function
-                    "func_cp": Read_datset(CEA_FLDPATH).gen_func("Cp_c"),           # spcific heat interpolate function
-                    "func_gamma": Read_datset(CEA_FLDPATH).gen_func("GAMMAs_c")     # specific heat ratio interpolate function
-                    }
+    # # Function list of NASA-CEA calculation result
+    # CEA_FLDPATH = os.path.join("cea_db", "GOX_CurableResin", "csv_database")        # folder path, which contain csv data-base of CEA results
+    # FUNCLIST_CEA = {"func_T": Read_datset(CEA_FLDPATH).gen_func("T_c"),             # gas temeratur interporate function
+    #                 "func_CSTAR": Read_datset(CEA_FLDPATH).gen_func("CSTAR"),       # c* interporate function
+    #                 "func_M": Read_datset(CEA_FLDPATH).gen_func("M_c"),             # molecular weight interpolate function
+    #                 "func_cp": Read_datset(CEA_FLDPATH).gen_func("Cp_c"),           # spcific heat interpolate function
+    #                 "func_gamma": Read_datset(CEA_FLDPATH).gen_func("GAMMAs_c")     # specific heat ratio interpolate function
+    #                 }
 
-    PARAM_PLOT = {"interval": 0.1,     # [s] plot interval of movie
-                  "y_max": 5.0e-3,      # [m] plot width of fuel regression shape
-                 }
-
-    def FUNC_MOX(t):
-        """Function of oxidizer mass flow rate [kg/s]
-        
-        Parameters
-        ----------
-        t : float
-            time [s]
-        
-        Returns
-        -------
-        mox: float
-            oxidizer mass flow rate [kg/s]
-        """
-        mox1 = 2.0e-3 # [kg/s] oxidizer mass flow rate before slottling
-        mox2 = 4.5e-3 # [kg/s] oxidizer mass flow rate after slottling
-        if t < 5.0:
-            mox = mox1
-        elif 5.0<=t and t<14.0:
-            mox = mox2
-        elif 14.0<=t and t<20.0:
-            mox = mox1
-        else:
-            mox = mox2
-        return mox
+    # PARAM_PLOT = {"interval": 0.1,     # [s] plot interval of movie
+    #               "y_max": 5.0e-3,      # [m] plot width of fuel regression shape
+    #              }
 
     # def FUNC_MOX(t):
     #     """Function of oxidizer mass flow rate [kg/s]
@@ -327,48 +356,31 @@ if __name__ == "__main__":
     #     mox: float
     #         oxidizer mass flow rate [kg/s]
     #     """
-    #     mox_min = 5.0e-3 # [kg/s]
-    #     mox_max = 8.0e-3 # [kg/s]
-    #     t1 = 5.0 # [s]
-    #     t2 = 9.6 # [s]
-    #     t3 = 14.2 # [s]
-    #     t4 = 18.8 # [s]
-    #     t5 = 23.4 # [s]
-    #     t6 = 28.0 # [s]
-    #     t7 = 32.6 # [s]
-    #     t8 = 37.2 # [s]
-    #     t9 = 41.8 # [s]
-    #     t10 = 46.4 # [s]
-    #     t11 = 51.0 # [s]
-    #     t12 = 55.6 # [s]
-    #     if t < t1:
-    #         mox = mox_min
-    #     elif t1<=t and t<t2:
-    #         mox = (mox_max - mox_min)/(t2-t1)*(t-t1) + mox_min
-    #     elif t2<=t and t<t3:
-    #         mox = (mox_min - mox_max)/(t3-t2)*(t-t2) + mox_max
-    #     elif t3<=t and t<t4:
-    #         mox = (mox_max - mox_min)/(t4-t3)*(t-t3) + mox_min
-    #     elif t4<=t and t<t5:
-    #         mox = (mox_min - mox_max)/(t5-t4)*(t-t4) + mox_max
-    #     elif t5<=t and t<t6:
-    #         mox = (mox_max - mox_min)/(t6-t5)*(t-t5) + mox_min
-    #     elif t6<=t and t<t7:
-    #         mox = (mox_min - mox_max)/(t7-t6)*(t-t6) + mox_max
-    #     elif t7<=t and t<t8:
-    #         mox = (mox_max - mox_min)/(t8-t7)*(t-t7) + mox_min
-    #     elif t8<=t and t<t9:
-    #         mox = (mox_min - mox_max)/(t9-t8)*(t-t8) + mox_max
-    #     elif t9<=t and t<t10:
-    #         mox = (mox_max - mox_min)/(t10-t9)*(t-t9) + mox_min
-    #     elif t10<=t and t<t11:
-    #         mox = (mox_min - mox_max)/(t11-t10)*(t-t10) + mox_max
+    #     mox1 = 2.0e-3 # [kg/s] oxidizer mass flow rate before slottling
+    #     mox2 = 4.5e-3 # [kg/s] oxidizer mass flow rate after slottling
+    #     if t < 5.0:
+    #         mox = mox1
+    #     elif 5.0<=t and t<14.0:
+    #         mox = mox2
+    #     elif 14.0<=t and t<20.0:
+    #         mox = mox1
     #     else:
-    #         mox = (mox_max - mox_min)/(t12-t11)*(t-t11) + mox_min
+    #         mox = mox2
     #     return mox
 
+    ###### The Above Section is to Conduct Debugging ######
+
+# %% Read the calculation condition from cond.py and mox.csv
+    FLDNAME, COND, FUNC_MOX = read_cond()
+    PARAM_EXCOND = COND["PARAM_EXCOND"]
+    PARAM_CALCOND = COND["PARAM_CALCOND"]
+    PARAM_MODELCONST = COND["PARAM_MODELCONST"]
+    CEA_FLDPATH = COND["CEA_FLDPATH"]
+    FUNCLIST_CEA = COND["FUNCLIST_CEA"]
+    PARAM_PLOT = COND["PARAM_PLOT"]
+
 # %%  Generate instance of simulation, excete calculation and output all of the results
-    inst = Main(PARAM_EXCOND, PARAM_CALCOND, PARAM_MODELCONST, FUNCLIST_CEA, PARAM_PLOT)
+    inst = Main(PARAM_EXCOND, PARAM_CALCOND, PARAM_MODELCONST, CEA_FLDPATH,FUNCLIST_CEA, PARAM_PLOT)
     FIG = plt.figure(figsize=(37,20))
     inst.exe(FUNC_MOX)
     print("CFL = {}".format(inst.cond_cal["CFL"]))
