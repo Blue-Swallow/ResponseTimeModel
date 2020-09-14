@@ -106,7 +106,7 @@ class Main:
         self.funclist_cea = funclist_cea
         self.plot_param = plot_param
         self._initialize_()
-        self._gen_folder_()
+        self._mk_json_()
 
     def _initialize_(self):
         """ Initialize some class variable
@@ -117,6 +117,7 @@ class Main:
             pass
         else:
             self.fld_name = datetime.now().strftime("%Y_%m%d_%H%M%S")   # folder name which contain animation and figure of calculation result
+            os.makedirs(self.fld_name)
         self.img_list = []  # define the list in wihch images of plot figure are stacked
         self.t_history = np.array([])
         self.Pc_history = np.array([])
@@ -130,10 +131,9 @@ class Main:
         self.cstr_history = np.array([])
         self.of_history = np.array([])
 
-    def _gen_folder_(self):
-        """ Generate folder which contains calculation result and make json file
+    def _mk_json_(self):
+        """ Make the json file which contains calculation conditions
         """
-        os.makedirs(self.fld_name)
         dic_json = {"PARAM_EXCOND": self.cond_ex,
                     "PARAM_CALCOND": self.cond_cal,
                     "PARAM_MODELCONST": self.const_model,
