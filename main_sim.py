@@ -261,7 +261,7 @@ def read_cond():
                         }
         else:
             print("There is no python module of calculation condition, \"{}\"".format(name_cond_py))
-            sys.eixt()
+            sys.exit()
         if dic_cond["PARAM_CALCOND"]["use_mox_csv"]:
             if os.path.exists(os.path.join(fldname, name_mox_csv)):
                 df_mox = pd.read_csv(os.path.join(fldname, name_mox_csv), header=0, skiprows=[1,])
@@ -272,7 +272,7 @@ def read_cond():
                     return mox
             else:
                 print("There is no csv data of mox history, \"{}\"".format(name_mox_csv))
-                sys.eixt()
+                sys.exit()
         else:
             func_mox = cond.FUNC_MOX    # read function of mox history from cond.py
 
