@@ -4,5 +4,7 @@
 *.org
 *.ipynb
 *.old
+*.mp4
 main_sim_*
+!sample/
 !/cea_db/GOX_CurableResin
