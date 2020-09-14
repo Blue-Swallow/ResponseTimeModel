@@ -245,6 +245,18 @@ class Main:
 
 
 def read_cond():
+    """ Assign the name of folder which contains calculation condition and will contain calculation result.
+    
+    Returns
+    -------
+    fldname: string
+        the name of folder
+    dic_cond: dict of dict
+        dictionary of the dictioinary which contains calculating condition
+        keylist: "PARAM_EXCOND", "PARAM_CALCOND", "PARAM_MODELCONST", "CEA_FLDPATH", "CEA_FLDPATH", "CEA_FLDPATH", "FUNCLIST_CEA", "PARAM_PLOT"
+    func_mox: function
+        function for oxidizer mass flow rate. this is the function of time.
+    """
     name_mox_csv = "mox.csv"
     name_cond_py = "cond.py" 
     fldname = input("Please input the name of folder which contains calculating condition such as {} or {}\n>>".format(name_cond_py, name_mox_csv))
@@ -268,6 +280,18 @@ def read_cond():
                 df_mox.mox = df_mox.mox * 1.0e-3    # convert unit [g/s] to [kg/s]
                 func_tmp = CubicSpline(df_mox.t, df_mox.mox, bc_type="clamped", extrapolate=True)
                 def func_mox(t):
+                    """Function of oxidizer mass flow rate [kg/s]
+                    
+                    Parameters
+                    ----------
+                    t : float
+                        time [s]
+                    
+                    Returns
+                    -------
+                    mox: float
+                        oxidizer mass flow rate [kg/s]
+                    """
                     mox = float(func_tmp(t))
                     return mox
             else:
@@ -380,7 +404,7 @@ if __name__ == "__main__":
     PARAM_PLOT = COND["PARAM_PLOT"]
 
 # %%  Generate instance of simulation, excete calculation and output all of the results
-    inst = Main(PARAM_EXCOND, PARAM_CALCOND, PARAM_MODELCONST, CEA_FLDPATH,FUNCLIST_CEA, PARAM_PLOT)
+    inst = Main(PARAM_EXCOND, PARAM_CALCOND, PARAM_MODELCONST, CEA_FLDPATH,FUNCLIST_CEA, PARAM_PLOT, fldname=FLDNAME)
     FIG = plt.figure(figsize=(37,20))
     inst.exe(FUNC_MOX)
     print("CFL = {}".format(inst.cond_cal["CFL"]))
