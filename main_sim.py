@@ -247,7 +247,7 @@ class Main:
 def read_cond():
     name_mox_csv = "mox.csv"
     name_cond_py = "cond.py" 
-    fldname = input("Please input the folder name which contain calculating condition such as cond.json and func_mox.py\n>>")
+    fldname = input("Please input the name of folder which contains calculating condition such as {} or {}\n>>".format(name_cond_py, name_mox_csv))
     if os.path.exists(fldname):
         if os.path.exists(os.path.join(fldname, name_cond_py)):
             sys.path.append(os.path.join(os.path.dirname(__file__), fldname))
