@@ -155,29 +155,6 @@ def func_mox(Vox, Pc, **kwargs):
     mox = rho_ox*Vox*(np.pi*np.power(d,2)/4)
     return(mox)
 
-def func_Vox(mox, Pc, **kwargs):
-    """ Calculate oxidizer port velocity
-    
-    Paramter
-    -----------
-    Pc: float
-        chamber pressure [Pa]
-    mox: float
-        oxidizer mass flow rate [kg/s]
-        
-    Return
-    -----------
-    Vox: float
-        oxidizer port velocity [m/s]
-    """
-    R_ox = kwargs["Ru"]/kwargs["M_ox"]
-    T_ox = kwargs["T_ox"]
-    Df = kwargs["Df"]
-    a = kwargs["a"]
-    rho_ox = Pc/(R_ox*T_ox)
-    Vox = mox/(rho_ox*(1-a)*np.pi*np.power(Df,2)/4)
-    return Vox
-
 def func_G(i, ri, r, rdot, val, **kwargs):
     """ Local propellant mass flux
 
@@ -288,38 +265,6 @@ def func_rdotn(i, ri, r, val, **kwargs):
         theta = np.arctan((ri-r[i-1])/(2*dx))
         rdot_norm = Vf*np.tan(theta)
     return(rdot_norm)
-
-def func_re(P, u, **kwargs):
-    T = kwargs["T_ox"]
-    Rm = kwargs["Ru"]/kwargs["M_ox"]
-    d = kwargs["d"]
-    mu = kwargs["mu_ox"]
-    rho = P/(Rm*T)
-    Re = rho*u*d/mu
-    return Re
-
-def func_ustr_lam(P, u, **kwargs):
-    T = kwargs["T_ox"]
-    Rm = kwargs["Ru"]/kwargs["M_ox"]
-    d = kwargs["d"]
-    mu = kwargs["mu_ox"]
-    rho = P/(Rm*T)
-    grad = 4*u/d
-    tau = mu*grad
-    ustr = np.sqrt(tau/rho)
-    return ustr
-
-def func_ustr_turb(P, u, **kwargs):
-    T = kwargs["T_ox"]
-    Rm = kwargs["Ru"]/kwargs["M_ox"]
-    d = kwargs["d"]
-    mu = kwargs["mu_ox"]
-    rho = P/(Rm*T)
-    nu = mu/rho
-    lmbd = 0.3164*np.power(u*d/nu, -1/4)
-    tau = lmbd*rho*np.power(u, 2)/8
-    ustr = np.sqrt(tau/rho)
-    return ustr
 
 def func_f(ri, i, val, **kwargs):
     """ delivative of Runge-Kutta function
@@ -462,3 +407,4 @@ def func_rcut(r_tmp, rdot_tmp, rdot_norm_tmp, t_history, Vf_history, **kwargs):
             rdot[i] = rdot_tmp[i]
             rdot_norm[i] = rdot_norm_tmp[i]
     return r, rdot, rdot_norm
+

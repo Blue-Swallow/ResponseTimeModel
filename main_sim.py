@@ -23,6 +23,7 @@ from tqdm import tqdm
 from cea_post import Read_datset
 import mod_response
 import mod_shape
+import mod_func
 import mod_plot
 
 # %%

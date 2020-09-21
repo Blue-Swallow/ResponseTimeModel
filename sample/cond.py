@@ -4,21 +4,25 @@ import sys
 from cea_post import Read_datset
 # os.chdir("..")
 
-PARAM_EXCOND = {"d": 0.272e-3,        # [m] port diameter
+PARAM_EXCOND = {"d": 0.3e-3,        # [m] port diameter
                 "N": 433,           # [-] the number of port
                 "Df": 38e-3,        # [m] fuel outer diameter
                 "d_exit": 1.0e-3,   # [m] port exit diameter
                 "depth": 2.0e-3,    # [m] depth of expansion region of port exit
                 "pitch": 1.7e-3,    # [m] pitch between each ports
-                "Dt": 6.2e-3,       # [m] nozzle throat diameter
+                "Dt": 5.4e-3,       # [m] nozzle throat diameter
                 # "Dt": 6.5e-3,       # [m] nozzle throat diameter
-                "Lci": 20.0e-3,     # [m] initial chamber length
+                "De": 8.0e-3,       # [m] nozzle exit diamter
+                "Lci": 70.0e-3,     # [m] initial chamber length
                 "rho_f": 1190,      # [kg/m^3] solid fuel density
                 "M_ox": 32.0e-3,    # [kg/mol] oxidizer mass per unit mole
                 "T_ox": 300,        # [K] oxidizer temperature
+                "mu_ox": 20.3e-6,    # [Pa-s] oxidizer viscosity
                 "Ru": 8.3144598,    # [J/mol-K] Universal gas constant
                 "Pci": 0.1013e+6,   # [Pa] initial chamber pressure
-                "eta": 1.111325         # [-] efficiency of specific exhaust velocity
+                "Pa": 0.1013e+6,    # [Pa] atmospheric pressure
+                "eta": 0.858,       # [-] efficiency of specific exhaust velocity
+                "lambda": 0.98      # [-] efficiency of nozzle
                 }
 
 # Parameters of calculation condition
