@@ -289,6 +289,38 @@ def func_rdotn(i, ri, r, val, **kwargs):
         rdot_norm = Vf*np.tan(theta)
     return(rdot_norm)
 
+def func_re(P, u, **kwargs):
+    T = kwargs["T_ox"]
+    Rm = kwargs["Ru"]/kwargs["M_ox"]
+    d = kwargs["d"]
+    mu = kwargs["mu_ox"]
+    rho = P/(Rm*T)
+    Re = rho*u*d/mu
+    return Re
+
+def func_ustr_lam(P, u, **kwargs):
+    T = kwargs["T_ox"]
+    Rm = kwargs["Ru"]/kwargs["M_ox"]
+    d = kwargs["d"]
+    mu = kwargs["mu_ox"]
+    rho = P/(Rm*T)
+    grad = 4*u/d
+    tau = mu*grad
+    ustr = np.sqrt(tau/rho)
+    return ustr
+
+def func_ustr_turb(P, u, **kwargs):
+    T = kwargs["T_ox"]
+    Rm = kwargs["Ru"]/kwargs["M_ox"]
+    d = kwargs["d"]
+    mu = kwargs["mu_ox"]
+    rho = P/(Rm*T)
+    nu = mu/rho
+    lmbd = 0.3164*np.power(u*d/nu, -1/4)
+    tau = lmbd*rho*np.power(u, 2)/8
+    ustr = np.sqrt(tau/rho)
+    return ustr
+
 def func_f(ri, i, val, **kwargs):
     """ delivative of Runge-Kutta function
 

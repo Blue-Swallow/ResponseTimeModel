@@ -126,6 +126,9 @@ class Main:
         self.rdotn_history = np.empty([0, int(round((x_max+dx)/dx,0))])
         self.Vf_history = np.array([])
         self.Vox_history = np.array([])
+        self.Re_history = np.array([])
+        self.ustr_lam_history = np.array([])
+        self.ustr_turb_history = np.array([])
         self.mf_history = np.array([])
         self.mox_history = np.array([])
         self.cstr_history = np.array([])
@@ -175,6 +178,12 @@ class Main:
             self.Vox_history = np.append(self.Vox_history, Vox)
             Vf = mod_shape.func_Vf(Vox, Pc, **cond)
             self.Vf_history = np.append(self.Vf_history, Vf)
+            Re = mod_shape.func_re(Pc, Vox, **cond)
+            self.Re_history = np.append(self.Re_history, Re)
+            ustr_lam = mod_shape.func_ustr_lam(Pc, Vox, **cond)
+            self.ustr_lam_history = np.append(self.ustr_lam_history, ustr_lam)
+            ustr_turb = mod_shape.func_ustr_turb(Pc, Vox, **cond)
+            self.ustr_turb_history = np.append(self.ustr_turb_history, ustr_turb)
             if t != 0:
                 r_tmp = r_new_tmp
                 rdot_tmp = rdot_new_tmp
@@ -415,7 +424,10 @@ if __name__ == "__main__":
                   "mox": inst.mox_history,
                   "mf": inst.mf_history,
                   "of": inst.of_history,
-                  "cstr": inst.cstr_history
+                  "cstr": inst.cstr_history,
+                  "Re": inst.Re_history,
+                  "ustr_lam": inst.ustr_lam_history,
+                  "ustr_turb": inst.ustr_turb_history
                   }
     DF_RESULT = pd.DataFrame(DIC_RESULT)
     DF_RESULT.to_csv(os.path.join(inst.fld_name, "result.csv"))
