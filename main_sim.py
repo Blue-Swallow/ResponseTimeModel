@@ -19,6 +19,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from matplotlib.animation import ArtistAnimation
 from scipy.interpolate import CubicSpline
+from scipy.integrate import simps
 from tqdm import tqdm
 from cea_post import Read_datset
 import mod_response
@@ -127,6 +128,7 @@ class Main:
         self.rdotn_history = np.empty([0, int(round((x_max+dx)/dx,0))])
         self.Vf_history = np.array([])
         self.Vox_history = np.array([])
+        self.Lf_history = np.array([])
         self.Re_history = np.array([])
         self.ustr_lam_history = np.array([])
         self.ustr_turb_history = np.array([])
@@ -134,6 +136,10 @@ class Main:
         self.mox_history = np.array([])
         self.cstr_history = np.array([])
         self.of_history = np.array([])
+        self.gamma_history = np.array([])
+        self.Pe_history = np.array([])
+        self.CF_history = np.array([])
+        self.F_history = np.array([])
 
     def _mk_json_(self):
         """ Make the json file which contains calculation conditions
@@ -159,6 +165,11 @@ class Main:
         ## set several constant, function and variables before calculation
         N = self.cond_ex["N"]
         func_cstr = cond["func_CSTAR"]
+        func_gamma = cond["func_gamma"]
+        Ae = np.pi*np.power(cond["De"], 2)/4
+        At = np.pi*np.power(cond["Dt"], 2)/4
+        eps = Ae/At
+        func_Pe = mod_func.class_Pe(func_gamma, eps).gen_func()
         cond["time"], cond["x"], r_tmp, rdot_tmp, rdotn_tmp = mod_shape.initialize_calvalue(**cond)
         self.x = cond["x"]
         val = {}
@@ -174,16 +185,23 @@ class Main:
                 Pc = Pc_new
             val["Pc"] = Pc
             self.Pc_history = np.append(self.Pc_history, Pc)
-            Vox = mod_shape.func_Vox(mox, Pc, **cond)
+            Vox = mod_func.func_Vox(mox, Pc, **cond)
             val["Vox"] = Vox
             self.Vox_history = np.append(self.Vox_history, Vox)
             Vf = mod_shape.func_Vf(Vox, Pc, **cond)
             self.Vf_history = np.append(self.Vf_history, Vf)
-            Re = mod_shape.func_re(Pc, Vox, **cond)
+            Lf = cond["Lf"] - simps(self.Vf_history, self.t_history, even="avg")
+            self.Lf_history = np.append(self.Lf_history, Lf)
+            if cond["calculate_ustr"]:
+                Re = mod_func.func_re(Pc, Vox, **cond)
+                ustr_lam = mod_func.func_ustr_lam(Pc, Vox, **cond)
+                ustr_turb = mod_func.func_ustr_turb(Pc, Vox, **cond)
+            else:
+                Re = np.nan
+                ustr_lam = np.nan
+                ustr_turb = np.nan
             self.Re_history = np.append(self.Re_history, Re)
-            ustr_lam = mod_shape.func_ustr_lam(Pc, Vox, **cond)
             self.ustr_lam_history = np.append(self.ustr_lam_history, ustr_lam)
-            ustr_turb = mod_shape.func_ustr_turb(Pc, Vox, **cond)
             self.ustr_turb_history = np.append(self.ustr_turb_history, ustr_turb)
             if t != 0:
                 r_tmp = r_new_tmp
@@ -208,11 +226,29 @@ class Main:
             if mf<=0.0:
                 of = np.nan
                 cstr_ex = Pc*np.pi*np.power(cond["Dt"], 2)/(4*mox)
+                gamma = np.nan
+                Pe = np.nan
             else:
                 of = mox/mf
                 cstr_ex = cond["eta"]*func_cstr(of, Pc)
+                if cond["calculate_F"]:
+                    gamma = func_gamma(of, Pc)
+                    Pe = func_Pe(of, Pc)
+                else:
+                    gamma = np.nan
+                    Pe = np.nan
             self.of_history = np.append(self.of_history, of)
             self.cstr_history = np.append(self.cstr_history, cstr_ex)
+            if cond["calculate_F"]:
+                CF = mod_func.func_cf(Pc, Pe, gamma, **cond)
+                F = cond["lambda"]*CF*Pc*At
+            else:
+                CF = np.nan
+                F = np.nan
+            self.CF_history = np.append(self.CF_history, CF)
+            self.F_history = np.append(self.F_history, F)
+            self.gamma_history = np.append(self.gamma_history, gamma)
+            self.Pe_history = np.append(self.Pe_history, Pe)
             ## calculate the next time step values at the following lines
             val["r"] = r_tmp
             val["rdot"] = rdot_tmp
@@ -426,6 +462,11 @@ if __name__ == "__main__":
                   "mf": inst.mf_history,
                   "of": inst.of_history,
                   "cstr": inst.cstr_history,
+                  "gamma": inst.gamma_history,
+                  "Pe": inst.Pe_history,
+                  "CF": inst.CF_history,
+                  "F": inst.F_history,
+                  "Lf": inst.Lf_history,
                   "Re": inst.Re_history,
                   "ustr_lam": inst.ustr_lam_history,
                   "ustr_turb": inst.ustr_turb_history

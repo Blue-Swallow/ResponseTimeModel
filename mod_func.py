@@ -67,6 +67,16 @@ def func_ustr_turb(P, u, **kwargs):
     ustr = np.sqrt(tau/rho)
     return ustr
 
+
+def func_cf(Pc, Pe, gamma, **kwargs):
+    Ae = np.pi*np.power(kwargs["De"], 2)/4
+    At = np.pi*np.power(kwargs["Dt"], 2)/4
+    Pa = kwargs["Pa"]
+    eps = Ae/At
+    CF = np.sqrt((2*np.power(gamma, 2))/(gamma-1) *np.power(2/(gamma+1), (gamma+1)/(gamma-1))\
+        *(1 -np.power(Pe/Pc, (gamma-1)/gamma))) + eps*(Pe-Pa)/Pc
+    return CF
+
 class class_Pe():
     """Class to calculate Nozzle exit pressure, Pe [Pa].
     Parameter

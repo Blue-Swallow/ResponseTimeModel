@@ -1,19 +1,17 @@
 import os
 import sys
-# sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from cea_post import Read_datset
-# os.chdir("..")
 
 PARAM_EXCOND = {"d": 0.3e-3,        # [m] port diameter
-                "N": 433,           # [-] the number of port
+                "N": 432,           # [-] the number of port
                 "Df": 38e-3,        # [m] fuel outer diameter
                 "d_exit": 1.0e-3,   # [m] port exit diameter
                 "depth": 2.0e-3,    # [m] depth of expansion region of port exit
                 "pitch": 1.7e-3,    # [m] pitch between each ports
                 "Dt": 5.4e-3,       # [m] nozzle throat diameter
-                # "Dt": 6.5e-3,       # [m] nozzle throat diameter
                 "De": 8.0e-3,       # [m] nozzle exit diamter
                 "Lci": 70.0e-3,     # [m] initial chamber length
+                "Lf": 107e-3,       # [m] initial fuel length
                 "rho_f": 1190,      # [kg/m^3] solid fuel density
                 "M_ox": 32.0e-3,    # [kg/mol] oxidizer mass per unit mole
                 "T_ox": 300,        # [K] oxidizer temperature
@@ -26,24 +24,21 @@ PARAM_EXCOND = {"d": 0.3e-3,        # [m] port diameter
                 }
 
 # Parameters of calculation condition
-PARAM_CALCOND = {"dt": 0.001,       # [s] time resolution
-                    "dx": 0.1e-4,      # [m] space resolution
-                #  "dx": 0.1e-3,      # [m] space resolution
-                #  "t_end": 1.0,     # [s] end time of calculation
-                    "t_end": 30.85,     # [s] end time of calculation
-                    "x_max": 15.0e-3,   # [m] maximum calculation region
-                #  "x_max": 10.0e-3,   # [m] maximum calculation region
-                    "Vf_mode": False,  # whether calculation uses Vf (radial integretion) or not in mf calculation
-                    "Af_modify": True,  # whether modify the effect of 2D idealization for burning area, Af, or not.
-                    "use_mox_csv": True # whether use mox history in mox.csv or the following function of FUNC_MOX.
+PARAM_CALCOND = {"dt": 0.001,               # [s] time resolution
+                 "dx": 0.1e-3,              # [m] space resolution
+                 "t_end": 30.7,             # [s] end time of calculation
+                 "x_max": 18.0e-3,          # [m] maximum calculation region
+                 "calculate_ustr": True,    # whether caulacate friction coefficent or not
+                 "calculate_F": True,       # whether calculate thrust or not
+                 "Vf_mode": False,          # whether calculation uses Vf (radial integretion) or not in mf calculation
+                 "Af_modify": True,         # whether modify the effect of 2D idealization for burning area, Af, or not.
+                 "use_mox_csv": True        # whether use mox history in mox.csv or the following function of FUNC_MOX.
                 }
 
 # Constant of fuel regression model and experimental regression rate formula
-PARAM_MODELCONST = {"Cr": 20.0e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
-                    # "Cr": 3.01e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
-                    # "Cr": 4.58e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
-                    "z": 0.6,       # exponent constant of propellant mass flux, G.
-                    "m": -0.2,      # exponent constant of distance from leading edge of fuel, x.
+PARAM_MODELCONST = {"Cr": 15.38e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
+                    "z": 0.333,       # exponent constant of propellant mass flux, G.
+                    "m": -0.339,      # exponent constant of distance from leading edge of fuel, x.
                     "k": 3.0e+4,    # experimental constant, which multiply on G when calculate theta, which reflect the effect of leading edge of boundary layer 
                     "C1": 1.39e-7,  # experimental constant of experimental regression rate formula
                     "C2": 1.61e-9,  # experimental constant of experimental regression rate formula
@@ -78,13 +73,13 @@ def FUNC_MOX(t):
     mox: float
         oxidizer mass flow rate [kg/s]
     """
-    mox1 = 2.0e-3 # [kg/s] oxidizer mass flow rate before slottling
-    mox2 = 4.5e-3 # [kg/s] oxidizer mass flow rate after slottling
-    if t < 5.0:
+    mox1 = 4.0e-3 # [kg/s] oxidizer mass flow rate before slottling
+    mox2 = 6.0e-3 # [kg/s] oxidizer mass flow rate after slottling
+    if t < 8.0:
         mox = mox1
-    elif 5.0<=t and t<14.0:
+    elif 8.0<=t and t<16.0:
         mox = mox2
-    elif 14.0<=t and t<20.0:
+    elif 16.0<=t and t<24.0:
         mox = mox1
     else:
         mox = mox2
