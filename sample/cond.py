@@ -39,7 +39,6 @@ PARAM_CALCOND = {"dt": 0.001,               # [s] time resolution
 PARAM_MODELCONST = {"Cr": 15.38e-6,  # regressoin constant that reflects the effect of combustion gas visocosity and blowing number
                     "z": 0.333,       # exponent constant of propellant mass flux, G.
                     "m": -0.339,      # exponent constant of distance from leading edge of fuel, x.
-                    "k": 3.0e+4,    # experimental constant, which multiply on G when calculate theta, which reflect the effect of leading edge of boundary layer 
                     "C1": 1.39e-7,  # experimental constant of experimental regression rate formula
                     "C2": 1.61e-9,  # experimental constant of experimental regression rate formula
                     "n": 1.0        # experimental exponent constant of pressure

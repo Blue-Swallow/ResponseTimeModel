@@ -5,6 +5,5 @@
 *.ipynb
 *.old
 *.mp4
-main_sim_*
-!sample/
+!sample/*
 !/cea_db/GOX_CurableResin

@@ -215,7 +215,6 @@ def func_rdot(i, ri, r, val, **kwargs):
     k = kwargs["Cr"]
     z = kwargs["z"]
     m = kwargs["m"]
-    k = kwargs["k"]
     Cr = kwargs["Cr"]
     rdot = val["rdot"]
     G = func_G(i, ri, r, rdot, val, **kwargs)
@@ -223,8 +222,6 @@ def func_rdot(i, ri, r, val, **kwargs):
         rdot0 = 0.0
     else:
         rdot0 = Cr*np.power(G, z)*np.power(x[i], m)
-    # th = k*np.power(G, 0.8)/Pc
-    # rdoti = rdot0 *np.sqrt(2/th) *np.sqrt(1 -1/th*(1 -np.exp(-th)))
     rdoti = rdot0
     return(rdoti)
 
